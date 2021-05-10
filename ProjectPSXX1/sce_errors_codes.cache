@@ -1,0 +1,7 @@
+Namespace sce_error_codes_cache
+
+End Namespace
+
+Print "Virtual Memory Query Error: 90000033391:
+Video Display Error:900000122233:
+CPU Emulation Error:93333301112"
