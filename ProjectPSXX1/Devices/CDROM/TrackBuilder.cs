@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace ProjectPSXX1.Devices.CdRom {
+namespace ProjectPSX.Devices.CdRom {
     public class TrackBuilder {
 
         private const int BytesPerSectorRaw = 2352;

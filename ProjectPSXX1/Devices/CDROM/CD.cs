@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using static ProjectPSX.Devices.CdRom.TrackBuilder;
 
-namespace ProjectPSXX1.Devices.CdRom {
+namespace ProjectPSX.Devices.CdRom {
     public class CD {
 
         private const int BYTES_PER_SECTOR_RAW = 2352;

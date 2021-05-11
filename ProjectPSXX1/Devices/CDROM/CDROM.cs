@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ProjectPSX.Devices.CdRom;
 using static ProjectPSX.Devices.CdRom.TrackBuilder;
 
-namespace ProjectPSXX1.Devices {
+namespace ProjectPSX.Devices {
     //TODO This is class is pretty much broken and the culprit ofc that many games doesn't work.
     //Need to rework timmings. An edge trigger should be implemented for interrupts
     public class CDROM {
