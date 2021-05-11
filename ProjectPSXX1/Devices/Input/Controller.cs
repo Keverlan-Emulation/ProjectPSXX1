@@ -1,27 +1,26 @@
-Using System.Collections.Generic;
-Using ProjectPSXX1.Devices.Input;
+﻿using System.Collections.Generic;
+using ProjectPSX.Devices.Input;
 
-Namespace ProjectPSXX1 {
-    Public abstract Class Controller {
-        Protected IHostWindow window;
+namespace ProjectPSX {
+    public abstract class Controller {
+        protected IHostWindow window;
 
-        Protected Queue<Byte> transferDataFifo = New Queue<Byte>();
-        Protected UShort buttons = 0xFFFF;
-        Public bool ack;
+        protected Queue<byte> transferDataFifo = new Queue<byte>();
+        protected ushort buttons = 0xFFFF;
+        public bool ack;
 
-        Public abstract Byte process(Byte b);
-        Public abstract void resetToIdle();
+        public abstract byte process(byte b);
+        public abstract void resetToIdle();
 
-        Public void handleJoyPadDown(GamepadInputsEnum inputCode) {
+        public void handleJoyPadDown(GamepadInputsEnum inputCode) {
             buttons &= (ushort)~(buttons & (ushort)inputCode);           
             //Console.WriteLine(buttons.ToString("x8"));
         }
 
-        Public void handleJoyPadUp(GamepadInputsEnum inputCode) {
+        public void handleJoyPadUp(GamepadInputsEnum inputCode) {
             buttons |= (ushort)inputCode;
             //Console.WriteLine(buttons.ToString("x8"));
         }
 
     }
 }
-End Namespace

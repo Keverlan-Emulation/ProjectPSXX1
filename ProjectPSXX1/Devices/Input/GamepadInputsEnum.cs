@@ -1,5 +1,5 @@
-Namespace ProjectPSXX1.Devices.Input {
-    Public Enum GamepadInputsEnum : UShort {
+﻿namespace ProjectPSX.Devices.Input {
+    public enum GamepadInputsEnum : ushort {
         Space = 0x1,
         Z = 0x2,
         C = 0x4,

@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.IO;
 
-namespace ProjectPSXX1 {
+namespace ProjectPSX {
     public class MemoryCard {
         //emulating a 3rd party one as it seems easier to and 0x3FF bad address than to handle the
         //original memcard badAddress 0xFFFF error and the IdCommand

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace ProjectPSXX1 {
+namespace ProjectPSX {
     public class JOYPAD {
 
         private byte JOY_TX_DATA; //1F801040h JOY_TX_DATA(W)
