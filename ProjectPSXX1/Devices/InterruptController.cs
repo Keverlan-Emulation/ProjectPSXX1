@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace ProjectPSXX1.Devices {
+namespace ProjectPSX.Devices {
     public class InterruptController {
 
         private uint ISTAT; //IF Trigger that needs to be ack

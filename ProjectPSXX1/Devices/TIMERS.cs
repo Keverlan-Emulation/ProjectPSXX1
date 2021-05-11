@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace ProjectPSXX1.Devices {
+namespace ProjectPSX.Devices {
     public class TIMERS {
 
         private TIMER[] timer = new TIMER[3];

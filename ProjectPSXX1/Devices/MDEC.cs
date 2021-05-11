@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace ProjectPSXX1.Devices {
+namespace ProjectPSX.Devices {
     public class MDEC {
 
         private const int NUM_BLOCKS = 6;

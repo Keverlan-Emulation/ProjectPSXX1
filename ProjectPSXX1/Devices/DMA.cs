@@ -1,8 +1,8 @@
-
+﻿
 using System;
 using System.Collections.Generic;
 
-namespace ProjectPSXX1.Devices {
+namespace ProjectPSX.Devices {
     public class DMA {
 
         public abstract class AChannel {
