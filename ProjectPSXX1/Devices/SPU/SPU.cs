@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using ProjectPSXX1.Devices.Spu;
+using ProjectPSX.Devices.Spu;
 
-namespace ProjectPSXX1.Devices {
+namespace ProjectPSX.Devices {
     public class SPU {
 
         // Todo:

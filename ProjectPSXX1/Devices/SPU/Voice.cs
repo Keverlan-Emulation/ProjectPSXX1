@@ -1,79 +1,79 @@
-Using System;
+﻿using System;
 
-Namespace ProjectPSXX1.Devices.Spu {
-    Public Class Voice {
+namespace ProjectPSX.Devices.Spu {
+    public class Voice {
 
-        Private Static ReadOnlySpan<SByte> positiveXaAdpcmTable => New SByte[] { 0, 60, 115, 98, 122 };
-        Private Static ReadOnlySpan<SByte> negativeXaAdpcmTable => New SByte[] { 0, 0, -52, -55, -60 };
+        private static ReadOnlySpan<sbyte> positiveXaAdpcmTable => new sbyte[] { 0, 60, 115, 98, 122 };
+        private static ReadOnlySpan<sbyte> negativeXaAdpcmTable => new sbyte[] { 0, 0, -52, -55, -60 };
 
-        Public struct Volume {
-            Public UShort register;
-            Public bool isSweepMode => ((register >> 15) & 0x1) != 0;
-            Public Short fixedVolume => (Short)(register << 1);
-            Public bool isSweepExponential => ((register >> 14) & 0x1) != 0;
-            Public bool isSweepDirectionDecrease => ((register >> 13) & 0x1) != 0;
-            Public bool isSweepPhaseNegative => ((register >> 12) & 0x1) != 0;
-            Public int sweepShift => (register >> 2) & 0x1F;
-            Public int sweepStep => register & 0x3;
+        public struct Volume {
+            public ushort register;
+            public bool isSweepMode => ((register >> 15) & 0x1) != 0;
+            public short fixedVolume => (short)(register << 1);
+            public bool isSweepExponential => ((register >> 14) & 0x1) != 0;
+            public bool isSweepDirectionDecrease => ((register >> 13) & 0x1) != 0;
+            public bool isSweepPhaseNegative => ((register >> 12) & 0x1) != 0;
+            public int sweepShift => (register >> 2) & 0x1F;
+            public int sweepStep => register & 0x3;
         }
-        Public Volume volumeLeft;           //0
-        Public Volume volumeRight;          //2
+        public Volume volumeLeft;           //0
+        public Volume volumeRight;          //2
 
-        Public UShort pitch;                //4
-        Public UShort startAddress;         //6
-        Public UShort currentAddress;       //6 Internal
+        public ushort pitch;                //4
+        public ushort startAddress;         //6
+        public ushort currentAddress;       //6 Internal
 
-        Public struct ADSR {
-            Public UShort lo;               //8
-            Public UShort hi;               //A
-            Public bool isAttackModeExponential => ((lo >> 15) & 0x1) != 0;
-            Public int attackShift => (lo >> 10) & 0x1F;
-            Public int attackStep => (lo >> 8) & 0x3; //"+7,+6,+5,+4"
-            Public int decayShift => (lo >> 4) & 0xF;
-            Public int sustainLevel => lo & 0xF; //Level=(N+1)*800h
+        public struct ADSR {
+            public ushort lo;               //8
+            public ushort hi;               //A
+            public bool isAttackModeExponential => ((lo >> 15) & 0x1) != 0;
+            public int attackShift => (lo >> 10) & 0x1F;
+            public int attackStep => (lo >> 8) & 0x3; //"+7,+6,+5,+4"
+            public int decayShift => (lo >> 4) & 0xF;
+            public int sustainLevel => lo & 0xF; //Level=(N+1)*800h
 
-            Public bool isSustainModeExponential => ((hi >> 15) & 0x1) != 0;
-            Public bool isSustainDirectionDecrease => ((hi >> 14) & 0x1) != 0;
-            Public int sustainShift => (hi >> 8) & 0x1F;
-            Public int sustainStep => (hi >> 6) & 0x3;
-            Public bool isReleaseModeExponential => ((hi >> 5) & 0x1) != 0;
-            Public int releaseShift => hi & 0x1F;
+            public bool isSustainModeExponential => ((hi >> 15) & 0x1) != 0;
+            public bool isSustainDirectionDecrease => ((hi >> 14) & 0x1) != 0;
+            public int sustainShift => (hi >> 8) & 0x1F;
+            public int sustainStep => (hi >> 6) & 0x3;
+            public bool isReleaseModeExponential => ((hi >> 5) & 0x1) != 0;
+            public int releaseShift => hi & 0x1F;
         }
-        Public ADSR adsr;
+        public ADSR adsr;
 
-        Public UShort adsrVolume;           //C
-        Public UShort adpcmRepeatAddress;   //E
+        public ushort adsrVolume;           //C
+        public ushort adpcmRepeatAddress;   //E
 
-        Public struct Counter {            //internal
-            Public uint register;
-            Public uint currentSampleIndex {
-                Get { Return (register >> 12) & 0x1F; }
-                Set {
+        public struct Counter {            //internal
+            public uint register;
+            public uint currentSampleIndex {
+                get { return (register >> 12) & 0x1F; }
+                set {
                     register = (ushort)(register &= 0xFFF);
                     register |= value << 12;
                 }
             }
 
-            Public uint interpolationIndex => (register >> 3) & 0xFF;
+            public uint interpolationIndex => (register >> 3) & 0xFF;
         }
-        Public Counter counter;
+        public Counter counter;
 
-        Public Phase adsrPhase;
+        public Phase adsrPhase;
 
-        Public Short old;
-        Public Short older;
+        public short old;
+        public short older;
 
-        Public Short latest;
+        public short latest;
 
-        Public bool hasSamples;
+        public bool hasSamples;
 
-        Public bool readRamIrq;
+        public bool readRamIrq;
 
-        Public Voice() {
+        public Voice() {
             adsrPhase = Phase.Off;
         }
 
-        Public void keyOn() {
+        public void keyOn() {
             hasSamples = false;
             old = 0;
             older = 0;
@@ -83,12 +83,12 @@ Namespace ProjectPSXX1.Devices.Spu {
             adsrPhase = Phase.Attack;
         }
 
-        Public void keyOff() {
+        public void keyOff() {
             adsrCounter = 0;
             adsrPhase = Phase.Release;
         }
 
-        Public Enum Phase {
+        public enum Phase {
             Attack,
             Decay,
             Sustain,
@@ -96,36 +96,36 @@ Namespace ProjectPSXX1.Devices.Spu {
             Off,
         }
 
-        Public Byte[] spuAdpcm = New Byte[16];
-        Public Short[] decodedSamples = New Short[31]; //28 samples from current block + 3 To make room For interpolation
-        internal void decodeSamples(Byte[] ram, UShort ramIrqAddress) {
+        public byte[] spuAdpcm = new byte[16];
+        public short[] decodedSamples = new short[31]; //28 samples from current block + 3 to make room for interpolation
+        internal void decodeSamples(byte[] ram, ushort ramIrqAddress) {
             //save the last 3 samples from the last decoded block
-            //this are needed for interpolation in case the voice.counter.currentSampleIndex Is 0 1 Or 2
+            //this are needed for interpolation in case the voice.counter.currentSampleIndex is 0 1 or 2
             decodedSamples[2] = decodedSamples[decodedSamples.Length - 1];
             decodedSamples[1] = decodedSamples[decodedSamples.Length - 2];
             decodedSamples[0] = decodedSamples[decodedSamples.Length - 3];
 
             Array.Copy(ram, currentAddress * 8, spuAdpcm, 0, 16);
 
-            //ramIrqAddress Is >> 8 so we only need to check for currentAddress And + 1
+            //ramIrqAddress is >> 8 so we only need to check for currentAddress and + 1
             readRamIrq |= currentAddress == ramIrqAddress || currentAddress + 1 == ramIrqAddress;           
 
             int shift = 12 - (spuAdpcm[0] & 0x0F);
-            int filter = (spuAdpcm[0] & 0x70) >> 4; //filter on SPU adpcm Is 0-4 vs XA wich Is 0-3
-            If (filter > 4) filter = 4; //Crash Bandicoot sets this To 7 at the End Of the first level And overflows the filter
+            int filter = (spuAdpcm[0] & 0x70) >> 4; //filter on SPU adpcm is 0-4 vs XA wich is 0-3
+            if (filter > 4) filter = 4; //Crash Bandicoot sets this to 7 at the end of the first level and overflows the filter
 
             int f0 = positiveXaAdpcmTable[filter];
             int f1 = negativeXaAdpcmTable[filter];
 
-            //Actual ADPCM decoding Is the same as on XA but the layout here Is sequencial by nibble where on XA in grouped by nibble line
-            int position = 2; //skip shift And flags
+            //Actual ADPCM decoding is the same as on XA but the layout here is sequencial by nibble where on XA in grouped by nibble line
+            int position = 2; //skip shift and flags
             int nibble = 1;
-            For (int i = 0; i < 28; i++) {
+            for (int i = 0; i < 28; i++) {
                 nibble = (nibble + 1) & 0x1;
 
-                int t = signed4bit((Byte)((spuAdpcm[position] >> (nibble * 4)) & 0x0F));
+                int t = signed4bit((byte)((spuAdpcm[position] >> (nibble * 4)) & 0x0F));
                 int s = (t << shift) + ((old * f0 + older * f1 + 32) / 64);
-                Short sample = (Short)Math.Clamp(s, -0x8000, 0x7FFF);
+                short sample = (short)Math.Clamp(s, -0x8000, 0x7FFF);
 
                 decodedSamples[3 + i] = sample;
 
@@ -136,23 +136,23 @@ Namespace ProjectPSXX1.Devices.Spu {
             }
         }
 
-        Public Static int signed4bit(Byte value) {
-            Return (value << 28) >> 28;
+        public static int signed4bit(byte value) {
+            return (value << 28) >> 28;
         }
 
         internal short processVolume(Volume volume) {
-            If (!volume.isSweepMode) {
-                Return volume.fixedVolume;
+            if (!volume.isSweepMode) {
+                return volume.fixedVolume;
             } else {
-                Return 0; //todo handle sweep mode volume envelope
+                return 0; //todo handle sweep mode volume envelope
             }
         }
 
         int adsrCounter;
         internal void tickAdsr(int v) {
-            If (adsrPhase == Phase.Off) {
+            if (adsrPhase == Phase.Off) {
                 adsrVolume = 0;
-                Return;
+                return;
             }
 
             int adsrTarget;
@@ -163,35 +163,35 @@ Namespace ProjectPSXX1.Devices.Spu {
 
             //Todo move out of tick the actual change of phase
             switch (adsrPhase) {
-                Case Phase.Attack : 
+                case Phase.Attack:
                     adsrTarget = 0x7FFF;
                     adsrShift = adsr.attackShift;
-                    adsrStep = 7 - adsr.attackStep; // reg Is 0-3 but values are "+7,+6,+5,+4"
+                    adsrStep = 7 - adsr.attackStep; // reg is 0-3 but values are "+7,+6,+5,+4"
                     isDecreasing = false; // Allways increase till 0x7FFF
                     isExponential = adsr.isAttackModeExponential;
                     break;
-                Case Phase.Decay : 
+                case Phase.Decay:
                     adsrTarget = (adsr.sustainLevel + 1) * 0x800;
                     adsrShift = adsr.decayShift;
                     adsrStep = -8;
                     isDecreasing = true; // Allways decreases (till target)
                     isExponential = true; // Allways exponential
                     break;
-                Case Phase.Sustain : 
+                case Phase.Sustain:
                     adsrTarget = 0;
                     adsrShift = adsr.sustainShift;
                     adsrStep = adsr.isSustainDirectionDecrease? -8 + adsr.sustainStep: 7 - adsr.sustainStep;
                     isDecreasing = adsr.isSustainDirectionDecrease; //till keyoff
                     isExponential = adsr.isSustainModeExponential;
                     break;
-                Case Phase.Release : 
+                case Phase.Release:
                     adsrTarget = 0;
                     adsrShift = adsr.releaseShift;
                     adsrStep = -8;
                     isDecreasing = true; // Allways decrease till 0
                     isExponential = adsr.isReleaseModeExponential;
                     break;
-                Default: 
+                default:
                     adsrTarget = 0;
                     adsrShift = 0;
                     adsrStep = 0;
@@ -203,23 +203,23 @@ Namespace ProjectPSXX1.Devices.Spu {
             //Envelope Operation depending on Shift/Step/Mode/Direction
             //AdsrCycles = 1 SHL Max(0, ShiftValue-11)
             //AdsrStep = StepValue SHL Max(0,11-ShiftValue)
-            //IF exponential And increase And AdsrLevel>6000h THEN AdsrCycles=AdsrCycles*4    
-            //IF exponential And decrease THEN AdsrStep = AdsrStep * AdsrLevel / 8000h
+            //IF exponential AND increase AND AdsrLevel>6000h THEN AdsrCycles=AdsrCycles*4    
+            //IF exponential AND decrease THEN AdsrStep = AdsrStep * AdsrLevel / 8000h
             //Wait(AdsrCycles); cycles counted at 44.1kHz clock
             //AdsrLevel=AdsrLevel+AdsrStep  ;saturated to 0..+7FFFh
 
-            If (adsrCounter > 0) { adsrCounter--; Return; }
+            if (adsrCounter > 0) { adsrCounter--; return; }
 
             int envelopeCycles = 1 << Math.Max(0, adsrShift - 11);
             int envelopeStep = adsrStep << Math.Max(0, 11 - adsrShift);
-            If (isExponential && !isDecreasing && adsrVolume > 0x6000) { envelopeCycles *= 4; }
-            If (isExponential && isDecreasing) { envelopeStep = (envelopeStep * adsrVolume) >> 15; }
+            if(isExponential && !isDecreasing && adsrVolume > 0x6000) { envelopeCycles *= 4; }
+            if(isExponential && isDecreasing) { envelopeStep = (envelopeStep * adsrVolume) >> 15; }
 
             adsrVolume = (ushort)Math.Clamp(adsrVolume + envelopeStep, 0, 0x7FFF);
             adsrCounter = envelopeCycles;
 
-            bool nextPhase = isDecreasing?(adsrVolume <= adsrTarget) :  (adsrVolume >= adsrTarget);
-            If (nextPhase && adsrPhase!= Phase.Sustain) {
+            bool nextPhase = isDecreasing ? (adsrVolume <= adsrTarget) : (adsrVolume >= adsrTarget);
+            if (nextPhase && adsrPhase != Phase.Sustain) {
                 adsrPhase++;
                 adsrCounter = 0;
             };
