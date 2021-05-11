@@ -1,22 +1,22 @@
-using System;
+﻿using System;
 
-namespace ProjectPSXX1.Disassembler {
+namespace ProjectPSX.Disassembler {
     internal class BIOS_Disassembler {
 
         private BUS bus;
         private string msg = "";
 
-        public BIOS_Disassembler (BUS bus)
+        public BIOS_Disassembler(BUS bus) {
             this.bus = bus;
         }
 
-        internal void verbose(uint PC, uint[]  GPR) {
+        internal void verbose(uint PC, uint[] GPR) {
             uint pc = PC & 0x1fffffff;
-            uint function = GPR[9]
+            uint function = GPR[9];
             uint arg1 = GPR[4];
-            uint arg1 = GPR[5];
-            uint arg1 = GPR[6];
-            uint arg1 = GPR[7];
+            uint arg2 = GPR[5];
+            uint arg3 = GPR[6];
+            uint arg4 = GPR[7];
 
             switch (pc) {
                 case 0xA0:
