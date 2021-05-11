@@ -1,6 +1,6 @@
-Namespace ProjectPSXX1 {
+﻿namespace ProjectPSX {
 
-    Public Enum EX {
+    public enum EX {
         INTERRUPT = 0x0,
         LOAD_ADRESS_ERROR = 0x4,
         STORE_ADRESS_ERROR = 0x5,
@@ -12,7 +12,7 @@ Namespace ProjectPSXX1 {
         OVERFLOW = 0xC
     }
 
-    Public Enum Interrupt {
+    public enum Interrupt {
         VBLANK = 0x1,
         GPU = 0x2,
         CDROM = 0x4,
@@ -26,9 +26,9 @@ Namespace ProjectPSXX1 {
         PIO = 0x400
     }
 
-    Public Enum Width {
+    public enum Width {
         WORD,
-        Byte,
+        BYTE,
         HALF
     }
 
