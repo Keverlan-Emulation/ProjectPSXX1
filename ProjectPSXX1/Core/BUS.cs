@@ -1,11 +1,11 @@
-using ProjectPSXX1.Devices;
+﻿using ProjectPSX.Devices;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace ProjectPSXX1 {
+namespace ProjectPSX {
     //TODO:
     //Do loadX and WriteX simple functions that return a value based on a generic load and write giant switch pointer return
     // WIP: Already got rid of the multiple loadX writeX variants need to adress the giant switches but then how to handle the individual

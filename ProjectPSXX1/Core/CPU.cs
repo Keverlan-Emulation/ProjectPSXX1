@@ -1,127 +1,128 @@
-Using System;
-Using System.Runtime.CompilerServices;
-Using ProjectPSXX1.Disassembler;
+﻿using System;
+using System.Runtime.CompilerServices;
+using ProjectPSX.Disassembler;
 
-Namespace ProjectPSXX1 {
-    internal unsafe Class CPU {  //MIPS R3000A-compatible 32-bit RISC CPU MIPS R3051 With 5 KB L1 cache, running at 33.8688 MHz // 33868800
+namespace ProjectPSX {
+    internal unsafe class CPU {  //MIPS R3000A-compatible 32-bit RISC CPU MIPS R3051 with 5 KB L1 cache, running at 33.8688 MHz // 33868800
 
-       Private uint PC_Now; // PC On current execution As PC And PC Predictor go ahead after fetch. This Is handy On Branch Delay so it dosn't give erronious PC-4
-       Private uint PC = 0xbfc0_0000; // Bios Entry Point
-       Private uint PC_Predictor = 0xbfc0_0004; //Next op For branch delay slot emulation
+        private uint PC_Now; // PC on current execution as PC and PC Predictor go ahead after fetch. This is handy on Branch Delay so it dosn't give erronious PC-4
+        private uint PC = 0xbfc0_0000; // Bios Entry Point
+        private uint PC_Predictor = 0xbfc0_0004; //next op for branch delay slot emulation
 
-       Private uint[] GPR = New uint[32];
-       Private uint HI;
-       Private uint LO;
+        private uint[] GPR = new uint[32];
+        private uint HI;
+        private uint LO;
 
-       Private bool opcodeIsBranch;
-       Private bool opcodeIsDelaySlot;
+        private bool opcodeIsBranch;
+        private bool opcodeIsDelaySlot;
 
-       Private bool opcodeTookBranch;
-       Private bool opcodeInDelaySlotTookBranch;
+        private bool opcodeTookBranch;
+        private bool opcodeInDelaySlotTookBranch;
 
-       Private Static uint[] ExceptionAdress = New uint[] { 0x8000_0080, 0xBFC0_0180 };
+        private static uint[] ExceptionAdress = new uint[] { 0x8000_0080, 0xBFC0_0180 };
 
-       //CoPro Regs
-       Private uint[] COP0_GPR = New uint[16];
-       Private Const int SR = 12;
-       Private Const int CAUSE = 13;
-       Private Const int EPC = 14;
-       Private Const int BADA = 8;
-       Private Const int JUMPDEST = 6;
+        //CoPro Regs
+        private uint[] COP0_GPR = new uint[16];
+        private const int SR = 12;
+        private const int CAUSE = 13;
+        private const int EPC = 14;
+        private const int BADA = 8;
+        private const int JUMPDEST = 6;
 
-       Private bool dontIsolateCache;
+        private bool dontIsolateCache;
 
-       Private GTE gte;
-       Private BUS bus;
+        private GTE gte;
+        private BUS bus;
 
-       Private BIOS_Disassembler bios;
-       Private MIPS_Disassembler mips;
+        private BIOS_Disassembler bios;
+        private MIPS_Disassembler mips;
 
-       Private struct MEM {
-           Public uint register;
-           Public uint value;
-       }
-       Private MEM writeBack;
-       Private MEM memoryLoad;
-       Private MEM delayedMemoryLoad;
+        private struct MEM {
+            public uint register;
+            public uint value;
+        }
+        private MEM writeBack;
+        private MEM memoryLoad;
+        private MEM delayedMemoryLoad;
 
-       Public struct Instr {
-           Public uint value;                     //raw
-           Public uint opcode => value >> 26;     //Instr opcode
+        public struct Instr {
+            public uint value;                     //raw
+            public uint opcode => value >> 26;     //Instr opcode
 
-           //I-Type
-           Public uint rs => (value >> 21) & 0x1F;//Register Source
-           Public uint rt => (value >> 16) & 0x1F;//Register Target
-           Public uint imm => value & 0xFFFF;     //Immediate value
-           Public uint imm_s => (uint)(Short)imm; //Immediate value sign extended
+            //I-Type
+            public uint rs => (value >> 21) & 0x1F;//Register Source
+            public uint rt => (value >> 16) & 0x1F;//Register Target
+            public uint imm => value & 0xFFFF;     //Immediate value
+            public uint imm_s => (uint)(short)imm; //Immediate value sign extended
 
-           //R-Type
-           Public uint rd => (value >> 11) & 0x1F;
-           Public uint sa => (value >> 6) & 0x1F;  //Shift Amount
-           Public uint Function => value & 0x3F;   //Function
+            //R-Type
+            public uint rd => (value >> 11) & 0x1F;
+            public uint sa => (value >> 6) & 0x1F;  //Shift Amount
+            public uint function => value & 0x3F;   //Function
 
-           //J-Type                                       
-           Public uint addr => value & 0x3FFFFFF;  //Target Address
+            //J-Type                                       
+            public uint addr => value & 0x3FFFFFF;  //Target Address
 
-           //id / Cop
-           Public uint id => opcode & 0x3; //This Is used mainly For coprocesor opcode id but its also used On opcodes that trigger exception
-       }
-       Private Instr instr;
+            //id / Cop
+            public uint id => opcode & 0x3; //This is used mainly for coprocesor opcode id but its also used on opcodes that trigger exception
+        }
+        private Instr instr;
 
-       //Debug
-       Private Long cycle; //current CPU cycle counter For debug
-       Public bool debug = False;
+        //Debug
+        private long cycle; //current CPU cycle counter for debug
+        public bool debug = false;
 
-       Public CPU(BUS bus) {
-           this.bus = bus;
-           bios = New BIOS_Disassembler(bus);
-           mips = New MIPS_Disassembler(ref HI, ref LO, GPR, COP0_GPR);
-           gte = New GTE();
+        public CPU(BUS bus) {
+            this.bus = bus;
+            bios = new BIOS_Disassembler(bus);
+            mips = new MIPS_Disassembler(ref HI, ref LO, GPR, COP0_GPR);
+            gte = new GTE();
 
-           COP0_GPR[15] = 0x2; //PRID Processor ID
+            COP0_GPR[15] = 0x2; //PRID Processor ID
 
-           initOpCodeTable();
-       }
-       Private Static Delegate*<CPU, void>[] opcodeMainTable;
-       Private Static Delegate*<CPU, void>[] opcodeSpecialTable;
+            initOpCodeTable();
+        }
 
-       Private void initOpCodeTable() {
-           Static void SPECIAL(CPU cpu) => cpu.SPECIAL();
-           Static void BCOND(CPU cpu) => cpu.BCOND();
-           Static void J(CPU cpu) => cpu.J();
-           Static void JAL(CPU cpu) => cpu.JAL();
-           Static void BEQ(CPU cpu) => cpu.BEQ();
-           Static void BNE(CPU cpu) => cpu.BNE();
-           Static void BLEZ(CPU cpu) => cpu.BLEZ();
-           Static void BGTZ(CPU cpu) => cpu.BGTZ();
-           Static void ADDI(CPU cpu) => cpu.ADDI();
-           Static void ADDIU(CPU cpu) => cpu.ADDIU();
-           Static void SLTI(CPU cpu) => cpu.SLTI();
-           Static void SLTIU(CPU cpu) => cpu.SLTIU();
-           Static void ANDI(CPU cpu) => cpu.ANDI();
-           Static void ORI(CPU cpu) => cpu.ORI();
-           Static void XORI(CPU cpu) => cpu.XORI();
-           Static void LUI(CPU cpu) => cpu.LUI();
-           Static void COP0(CPU cpu) => cpu.COP0();
-           Static void NOP(CPU cpu) => cpu.NOP();
-           Static void COP2(CPU cpu) => cpu.COP2();
-           Static void NA(CPU cpu) => cpu.NA();
-           Static void LB(CPU cpu) => cpu.LB();
-           Static void LH(CPU cpu) => cpu.LH();
-           Static void LWL(CPU cpu) => cpu.LWL();
-           Static void LW(CPU cpu) => cpu.LW();
-           Static void LBU(CPU cpu) => cpu.LBU();
-           Static void LHU(CPU cpu) => cpu.LHU();
-           Static void LWR(CPU cpu) => cpu.LWR();
-           Static void SB(CPU cpu) => cpu.SB();
-           Static void SH(CPU cpu) => cpu.SH();
-           Static void SWL(CPU cpu) => cpu.SWL();
-           Static void SW(CPU cpu) => cpu.SW();
-           Static void SWR(CPU cpu) => cpu.SWR();
-           Static void LWC2(CPU cpu) => cpu.LWC2();
-           Static void SWC2(CPU cpu) => cpu.SWC2();
+        private static delegate*<CPU, void>[] opcodeMainTable;
+        private static delegate*<CPU, void>[] opcodeSpecialTable;
 
-            opcodeMainTable = New delegate*<CPU, void>[] {
+        private void initOpCodeTable() {
+            static void SPECIAL(CPU cpu) => cpu.SPECIAL();
+            static void BCOND(CPU cpu) => cpu.BCOND();
+            static void J(CPU cpu) => cpu.J();
+            static void JAL(CPU cpu) => cpu.JAL();
+            static void BEQ(CPU cpu) => cpu.BEQ();
+            static void BNE(CPU cpu) => cpu.BNE();
+            static void BLEZ(CPU cpu) => cpu.BLEZ();
+            static void BGTZ(CPU cpu) => cpu.BGTZ();
+            static void ADDI(CPU cpu) => cpu.ADDI();
+            static void ADDIU(CPU cpu) => cpu.ADDIU();
+            static void SLTI(CPU cpu) => cpu.SLTI();
+            static void SLTIU(CPU cpu) => cpu.SLTIU();
+            static void ANDI(CPU cpu) => cpu.ANDI();
+            static void ORI(CPU cpu) => cpu.ORI();
+            static void XORI(CPU cpu) => cpu.XORI();
+            static void LUI(CPU cpu) => cpu.LUI();
+            static void COP0(CPU cpu) => cpu.COP0();
+            static void NOP(CPU cpu) => cpu.NOP();
+            static void COP2(CPU cpu) => cpu.COP2();
+            static void NA(CPU cpu) => cpu.NA();
+            static void LB(CPU cpu) => cpu.LB();
+            static void LH(CPU cpu) => cpu.LH();
+            static void LWL(CPU cpu) => cpu.LWL();
+            static void LW(CPU cpu) => cpu.LW();
+            static void LBU(CPU cpu) => cpu.LBU();
+            static void LHU(CPU cpu) => cpu.LHU();
+            static void LWR(CPU cpu) => cpu.LWR();
+            static void SB(CPU cpu) => cpu.SB();
+            static void SH(CPU cpu) => cpu.SH();
+            static void SWL(CPU cpu) => cpu.SWL();
+            static void SW(CPU cpu) => cpu.SW();
+            static void SWR(CPU cpu) => cpu.SWR();
+            static void LWC2(CPU cpu) => cpu.LWC2();
+            static void SWC2(CPU cpu) => cpu.SWC2();
+
+            opcodeMainTable = new delegate*<CPU, void>[] {
                 &SPECIAL,  &BCOND,  &J,      &JAL,    &BEQ,    &BNE,    &BLEZ,   &BGTZ,
                 &ADDI,     &ADDIU,  &SLTI,   &SLTIU,  &ANDI,   &ORI,    &XORI,   &LUI,
                 &COP0,     &NOP,    &COP2,   &NOP,    &NA,     &NA,     &NA,     &NA,
@@ -132,41 +133,41 @@ Namespace ProjectPSXX1 {
                 &NOP,      &NOP,    &SWC2,   &NOP,    &NA,     &NA,     &NA,     &NA,
             };
 
-            Static void SLL(CPU cpu) => cpu.SLL();
-            Static void SRL(CPU cpu) => cpu.SRL();
-            Static void SRA(CPU cpu) => cpu.SRA();
-            Static void SLLV(CPU cpu) => cpu.SLLV();
-            Static void SRLV(CPU cpu) => cpu.SRLV();
-            Static void SRAV(CPU cpu) => cpu.SRAV();
-            Static void JR(CPU cpu) => cpu.JR();
-            Static void SYSCALL(CPU cpu) => cpu.SYSCALL();
-            Static void BREAK(CPU cpu) => cpu.BREAK();
-            Static void JALR(CPU cpu) => cpu.JALR();
-            Static void MFHI(CPU cpu) => cpu.MFHI();
-            Static void MTHI(CPU cpu) => cpu.MTHI();
-            Static void MFLO(CPU cpu) => cpu.MFLO();
-            Static void MTLO(CPU cpu) => cpu.MTLO();
-            Static void MULT(CPU cpu) => cpu.MULT();
-            Static void MULTU(CPU cpu) => cpu.MULTU();
-            Static void DIV(CPU cpu) => cpu.DIV();
-            Static void DIVU(CPU cpu) => cpu.DIVU();
-            Static void ADD(CPU cpu) => cpu.ADD();
-            Static void ADDU(CPU cpu) => cpu.ADDU();
-            Static void Sub(CPU cpu) => cpu.Sub();
-            Static void SUBU(CPU cpu) => cpu.SUBU();
-            Static void And(CPU cpu) => cpu.And();
-            Static void Or(CPU cpu) => cpu.Or();
-            Static void Xor(CPU cpu) => cpu.Xor();
-            Static void NOR(CPU cpu) => cpu.NOR();
-            Static void SLT(CPU cpu) => cpu.SLT();
-            Static void SLTU(CPU cpu) => cpu.SLTU();
+            static void SLL(CPU cpu) => cpu.SLL();
+            static void SRL(CPU cpu) => cpu.SRL();
+            static void SRA(CPU cpu) => cpu.SRA();
+            static void SLLV(CPU cpu) => cpu.SLLV();
+            static void SRLV(CPU cpu) => cpu.SRLV();
+            static void SRAV(CPU cpu) => cpu.SRAV();
+            static void JR(CPU cpu) => cpu.JR();
+            static void SYSCALL(CPU cpu) => cpu.SYSCALL();
+            static void BREAK(CPU cpu) => cpu.BREAK();
+            static void JALR(CPU cpu) => cpu.JALR();
+            static void MFHI(CPU cpu) => cpu.MFHI();
+            static void MTHI(CPU cpu) => cpu.MTHI();
+            static void MFLO(CPU cpu) => cpu.MFLO();
+            static void MTLO(CPU cpu) => cpu.MTLO();
+            static void MULT(CPU cpu) => cpu.MULT();
+            static void MULTU(CPU cpu) => cpu.MULTU();
+            static void DIV(CPU cpu) => cpu.DIV();
+            static void DIVU(CPU cpu) => cpu.DIVU();
+            static void ADD(CPU cpu) => cpu.ADD();
+            static void ADDU(CPU cpu) => cpu.ADDU();
+            static void SUB(CPU cpu) => cpu.SUB();
+            static void SUBU(CPU cpu) => cpu.SUBU();
+            static void AND(CPU cpu) => cpu.AND();
+            static void OR(CPU cpu) => cpu.OR();
+            static void XOR(CPU cpu) => cpu.XOR();
+            static void NOR(CPU cpu) => cpu.NOR();
+            static void SLT(CPU cpu) => cpu.SLT();
+            static void SLTU(CPU cpu) => cpu.SLTU();
 
-            opcodeSpecialTable = New delegate*<CPU, void>[] {
+            opcodeSpecialTable = new delegate*<CPU, void>[] {
                 &SLL,   &NA,    &SRL,   &SRA,   &SLLV,    &NA,     &SRLV, &SRAV,
                 &JR,    &JALR,  &NA,    &NA,    &SYSCALL, &BREAK,  &NA,   &NA,
                 &MFHI,  &MTHI,  &MFLO,  &MTLO,  &NA,      &NA,     &NA,   &NA,
                 &MULT,  &MULTU, &DIV,   &DIVU,  &NA,      &NA,     &NA,   &NA,
-                &ADD,   &ADDU,  &SUB,   &SUBU,  &And,     &OR,     &Xor,  &NOR,
+                &ADD,   &ADDU,  &SUB,   &SUBU,  &AND,     &OR,     &XOR,  &NOR,
                 &NA,    &NA,    &SLT,   &SLTU,  &NA,      &NA,     &NA,   &NA,
                 &NA,    &NA,    &NA,    &NA,    &NA,      &NA,     &NA,   &NA,
                 &NA,    &NA,    &NA,    &NA,    &NA,      &NA,     &NA,   &NA,
@@ -174,9 +175,9 @@ Namespace ProjectPSXX1 {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Public void Run() {
+        public void Run() {
             fetchDecode();
-            If (instr.value!= 0) { //Skip Nops
+            if (instr.value != 0) { //Skip Nops
                 opcodeMainTable[instr.opcode](this); //Execute
             }
             MemAccess();
@@ -192,26 +193,26 @@ Namespace ProjectPSXX1 {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Public void handleInterrupts() {
-            //Executable address space Is limited to ram And bios on psx
+        public void handleInterrupts() {
+            //Executable address space is limited to ram and bios on psx
             uint maskedPC = PC & 0x1FFF_FFFF;
             uint load;
-            If (maskedPC < 0x1F00_0000) {
+            if (maskedPC < 0x1F00_0000) {
                 load = bus.LoadFromRam(maskedPC);
             } else {
                 load = bus.LoadFromBios(maskedPC);
             }
 
-            //This Is actually the "next" opcode if it's a GTE one
+            //This is actually the "next" opcode if it's a GTE one
             //just postpone the interrupt so it doesn't glitch out
-            //Crash Bandicoot intro Is a good example for this
+            //Crash Bandicoot intro is a good example for this
             uint instr = load >> 26;
-            If (instr == 0x12) { //COP2 MTC2
+            if (instr == 0x12) { //COP2 MTC2
                 //Console.WriteLine("WARNING COP2 OPCODE ON INTERRUPT");
-                Return;
+                return;
             }
 
-            If (bus.interruptController.interruptPending()) {
+            if (bus.interruptController.interruptPending()) {
                 COP0_GPR[CAUSE] |= 0x400;
             } else {
                 COP0_GPR[CAUSE] &= ~(uint)0x400;
@@ -221,17 +222,17 @@ Namespace ProjectPSXX1 {
             uint IM = (COP0_GPR[SR] >> 8) & 0xFF;
             uint IP = (COP0_GPR[CAUSE] >> 8) & 0xFF;
 
-            If (IEC && (IM & IP) > 0) {
+            if (IEC && (IM & IP) > 0) {
                 EXCEPTION(EX.INTERRUPT);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Private void fetchDecode() {
-            //Executable address space Is limited to ram And bios on psx
+        private void fetchDecode() {
+            //Executable address space is limited to ram and bios on psx
             uint maskedPC = PC & 0x1FFF_FFFF;
             uint load;
-            If (maskedPC < 0x1F00_0000) {
+            if (maskedPC < 0x1F00_0000) {
                 load = bus.LoadFromRam(maskedPC);
             } else {
                 load = bus.LoadFromBios(maskedPC);
@@ -246,10 +247,10 @@ Namespace ProjectPSXX1 {
             opcodeIsBranch = false;
             opcodeTookBranch = false;
 
-            If ((PC_Now & 0x3) != 0) {
+            if ((PC_Now & 0x3) != 0) {
                 COP0_GPR[BADA] = PC_Now;
                 EXCEPTION(EX.LOAD_ADRESS_ERROR);
-                Return;
+                return;
             }
 
             instr.value = load;
@@ -257,8 +258,8 @@ Namespace ProjectPSXX1 {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Private void MemAccess() {
-            If (delayedMemoryLoad.register!= memoryLoad.register) { //If loadDelay On same reg it Is lost/overwritten (amidog tests)
+        private void MemAccess() {
+            if (delayedMemoryLoad.register != memoryLoad.register) { //if loadDelay on same reg it is lost/overwritten (amidog tests)
                 GPR[memoryLoad.register] = memoryLoad.value;
             }
             memoryLoad = delayedMemoryLoad;
@@ -266,68 +267,68 @@ Namespace ProjectPSXX1 {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Private void WriteBack() {
+        private void WriteBack() {
             GPR[writeBack.register] = writeBack.value;
             writeBack.register = 0;
             GPR[0] = 0;
         }
 
         // Non Implemented by the CPU Opcodes
-        Private void NOP() { /*nop*/ }
+        private void NOP() { /*nop*/ }
 
-        Private void NA() => EXCEPTION(EX.ILLEGAL_INSTR, instr.id);
+        private void NA() => EXCEPTION(EX.ILLEGAL_INSTR, instr.id);
 
 
         // Main Table Opcodes
-        Private void SPECIAL() => opcodeSpecialTable[instr.Function](this);
+        private void SPECIAL() => opcodeSpecialTable[instr.function](this);
 
-        Private void BCOND() {
+        private void BCOND() {
             opcodeIsBranch = true;
-            uint op = Instr.rt;
+            uint op = instr.rt;
 
             bool should_link = (op & 0x1E) == 0x10;
             bool should_branch = (int)(GPR[instr.rs] ^ (op << 31)) < 0;
 
-            If (should_link) GPR[31] = PC_Predictor;
-            If (should_branch) BRANCH();
+            if (should_link) GPR[31] = PC_Predictor;
+            if (should_branch) BRANCH();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Private void J() {
+        private void J() {
             opcodeIsBranch = true;
             opcodeTookBranch = true;
             PC_Predictor = (PC_Predictor & 0xF000_0000) | (instr.addr << 2);
         }
 
-        Private void JAL() {
+        private void JAL() {
             setGPR(31, PC_Predictor);
             J();
         }
 
-        Private void BEQ() {
+        private void BEQ() {
             opcodeIsBranch = true;
-            If (GPR[instr.rs] == GPR[instr.rt]) {
+            if (GPR[instr.rs] == GPR[instr.rt]) {
                 BRANCH();
             }
         }
 
-        Private void BNE() {
+        private void BNE() {
             opcodeIsBranch = true;
-            If (GPR[instr.rs] != GPR[instr.rt]) {
+            if (GPR[instr.rs] != GPR[instr.rt]) {
                 BRANCH();
             }
         }
 
-        Private void BLEZ() {
+        private void BLEZ() {
             opcodeIsBranch = true;
-            If (((int)GPR[instr.rs]) <= 0) {
+            if (((int)GPR[instr.rs]) <= 0) {
                 BRANCH();
             }
         }
 
-        Private void BGTZ() {
+        private void BGTZ() {
             opcodeIsBranch = true;
-            If (((int)GPR[instr.rs]) > 0) {
+            if (((int)GPR[instr.rs]) > 0) {
                 BRANCH();
             }
         }
