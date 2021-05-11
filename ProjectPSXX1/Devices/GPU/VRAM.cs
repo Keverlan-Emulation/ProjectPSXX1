@@ -1,44 +1,44 @@
-Using System.Runtime.CompilerServices;
-Using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-Namespace ProjectPSXX1 {
-    Public Class VRAM {
-        Public int[] Bits { Get; Private Set; }
-        Public int Height;
-        Public int Width;
+namespace ProjectPSX {
+    public class VRAM {
+        public int[] Bits { get; private set; }
+        public int Height;
+        public int Width;
 
-        Protected GCHandle BitsHandle { Get; Private Set; }
+        protected GCHandle BitsHandle { get; private set; }
 
-        Public VRAM(int width, int height) {
+        public VRAM(int width, int height) {
             Height = height;
             Width = width;
-            Bits = New int[Width * Height];
+            Bits = new int[Width * Height];
             BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Public void SetPixel(int x, int y, int color) {
+        public void SetPixel(int x, int y, int color) {
             int index = x + (y * Width);
             Bits[index] = color;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Public int GetPixelRGB888(int x, int y) {
+        public int GetPixelRGB888(int x, int y) {
             int index = x + (y * Width);
-            Return Bits[index];
+            return Bits[index];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Public UShort GetPixelBGR555(int x, int y) {
+        public ushort GetPixelBGR555(int x, int y) {
             int index = x + (y * Width);
             int color = Bits[index];
 
-            Byte m = (Byte)((color & 0xFF000000) >> 24);
-            Byte r = (Byte)((color & 0x00FF0000) >> 16 + 3);
-            Byte g = (Byte)((color & 0x0000FF00) >> 8 + 3);
-            Byte b = (Byte)((color & 0x000000FF) >> 3);
+            byte m = (byte)((color & 0xFF000000) >> 24);
+            byte r = (byte)((color & 0x00FF0000) >> 16 + 3);
+            byte g = (byte)((color & 0x0000FF00) >> 8 + 3);
+            byte b = (byte)((color & 0x000000FF) >> 3);
 
-            Return (UShort)(m << 15 | b << 10 | g << 5 | r);
+            return (ushort)(m << 15 | b << 10 | g << 5 | r);
         }
 
     }

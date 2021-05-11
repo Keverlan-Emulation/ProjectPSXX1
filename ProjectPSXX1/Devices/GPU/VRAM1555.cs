@@ -1,31 +1,31 @@
-Using System.Runtime.CompilerServices;
-Using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-Namespace ProjectPSXX1 {
-    Public Class VRAM1555 {
-        Public UShort[] Bits { Get; Private Set; }
-        Public int Height;
-        Public int Width;
+namespace ProjectPSX {
+    public class VRAM1555 {
+        public ushort[] Bits { get; private set; }
+        public int Height;
+        public int Width;
 
-        Protected GCHandle BitsHandle { Get; Private Set; }
+        protected GCHandle BitsHandle { get; private set; }
 
-        Public VRAM1555(int width, int height) {
+        public VRAM1555(int width, int height) {
             Height = height;
             Width = width;
-            Bits = New ushort[Width * Height];
+            Bits = new ushort[Width * Height];
             BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Public void SetPixel(int x, int y, UShort color) {
+        public void SetPixel(int x, int y, ushort color) {
             int index = x + (y * Width);
             Bits[index] = color;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Public UShort GetPixel(int x, int y) {
+        public ushort GetPixel(int x, int y) {
             int index = x + (y * Width);
-            Return Bits[index];
+            return Bits[index];
         }
 
     }
